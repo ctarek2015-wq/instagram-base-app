@@ -48,7 +48,23 @@ function Composer({ currentUser }) {
       setFileInputFile(null);
       setFileInputValue("");
     } catch (error) {
-      setErrorMessage(error.message);
+      const rawMessage =
+        error?.message ||
+        error?.code ||
+        "Failed to upload image and create post.";
+
+      if (
+        /preflight|cors|cross-origin|failed to fetch|net::err_failed/i.test(
+          rawMessage
+        )
+      ) {
+        setErrorMessage(
+          "Storage upload blocked by CORS. Configure Firebase Storage CORS for https://ctarek2015-wq.github.io and retry."
+        );
+        return;
+      }
+
+      setErrorMessage(rawMessage);
     } finally {
       setIsUploading(false);
     }
