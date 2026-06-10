@@ -6,7 +6,7 @@ import { database } from "../firebase";
 
 const POSTS_FOLDER_NAME = "posts";
 
-function PostPage() {
+function PostPage({ isFirebaseConfigured }) {
   const navigate = useNavigate();
   const { postId } = useParams();
   const [post, setPost] = useState(null);
@@ -14,6 +14,12 @@ function PostPage() {
   const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
+    if (!isFirebaseConfigured || !database) {
+      setErrorMessage("Firebase is not configured. Cannot load post details.");
+      setLoading(false);
+      return;
+    }
+
     const postRef = ref(database, `${POSTS_FOLDER_NAME}/${postId}`);
 
     get(postRef)
@@ -30,7 +36,7 @@ function PostPage() {
       .finally(() => {
         setLoading(false);
       });
-  }, [postId]);
+  }, [postId, isFirebaseConfigured]);
 
   if (loading) {
     return <p>Loading post...</p>;

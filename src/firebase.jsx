@@ -14,14 +14,52 @@ const firebaseConfig = {
   appId: import.meta.env.VITE_SOME_APP_ID,
 };
 
-// Initialize Firebase
-const firebaseApp = initializeApp(firebaseConfig);
+const requiredEnvVars = [
+  "VITE_SOME_API_KEY",
+  "VITE_SOME_AUTH_DOMAIN",
+  "VITE_SOME_DATABASE_URL",
+  "VITE_SOME_PROJECT_ID",
+  "VITE_SOME_STORAGE_BUCKET",
+  "VITE_SOME_MESSAGE_SENDER_ID",
+  "VITE_SOME_APP_ID",
+];
 
-// Get a reference to the database service and export the reference for other modules
-export const database = getDatabase(firebaseApp);
+const isTemplateValue = (value) => {
+  return (
+    typeof value !== "string" ||
+    !value.trim() ||
+    value.includes("YOUR_") ||
+    value.toLowerCase().includes("placeholder") ||
+    value === "undefined" ||
+    value === "null"
+  );
+};
 
-// Get a reference to the storage service, which is used to create references in your storage bucket
-export const storage = getStorage(firebaseApp);
+const missingEnvVars = requiredEnvVars.filter((varName) =>
+  isTemplateValue(import.meta.env[varName])
+);
 
-// Get a reference to Firebase Auth
-export const auth = getAuth(firebaseApp);
+let firebaseApp = null;
+let database = null;
+let storage = null;
+let auth = null;
+let firebaseConfigError = "";
+
+if (missingEnvVars.length === 0) {
+  try {
+    firebaseApp = initializeApp(firebaseConfig);
+    database = getDatabase(firebaseApp);
+    storage = getStorage(firebaseApp);
+    auth = getAuth(firebaseApp);
+  } catch (error) {
+    firebaseConfigError = error.message || "Firebase failed to initialize.";
+    console.error("Firebase initialization error:", error);
+  }
+} else {
+  firebaseConfigError = `Missing Firebase env values: ${missingEnvVars.join(", ")}`;
+  console.warn("Firebase not initialized:", firebaseConfigError);
+}
+
+export const isFirebaseConfigured =
+  missingEnvVars.length === 0 && firebaseApp !== null && !firebaseConfigError;
+export { database, storage, auth, firebaseConfigError, firebaseApp };

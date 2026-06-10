@@ -4,9 +4,9 @@ import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
 } from "firebase/auth";
-import { auth } from "../firebase";
+import { auth, isFirebaseConfigured } from "../firebase";
 
-function AuthForm() {
+function AuthForm({ currentUser }) {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -22,6 +22,10 @@ function AuthForm() {
     setIsSubmitting(true);
 
     try {
+      if (!isFirebaseConfigured || !auth) {
+        throw new Error("Firebase auth is not configured yet.");
+      }
+
       if (isSignUp) {
         await createUserWithEmailAndPassword(auth, email, password);
       } else {
@@ -34,6 +38,28 @@ function AuthForm() {
       setIsSubmitting(false);
     }
   };
+
+  if (!isFirebaseConfigured) {
+    return (
+      <section className="auth-form">
+        <h2>Firebase not configured</h2>
+        <p>Please add your Firebase values to .env before signing in.</p>
+      </section>
+    );
+  }
+
+  if (currentUser) {
+    return (
+      <section className="auth-form">
+        <h2>You&apos;re already signed in</h2>
+        <p>
+          <Link to="/" className="nav-link">
+            Go to feed
+          </Link>
+        </p>
+      </section>
+    );
+  }
 
   return (
     <section className="auth-form">

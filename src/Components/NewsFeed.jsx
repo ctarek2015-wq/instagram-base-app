@@ -8,10 +8,14 @@ import "./NewsFeed.css";
 
 const POSTS_FOLDER_NAME = "posts";
 
-function NewsFeed({ currentUser }) {
+function NewsFeed({ currentUser, isFirebaseConfigured }) {
   const [posts, setPosts] = useState([]);
 
   useEffect(() => {
+    if (!isFirebaseConfigured || !database) {
+      return undefined;
+    }
+
     const messagesRef = databaseRef(database, POSTS_FOLDER_NAME);
     const unsubscribe = onChildAdded(messagesRef, (data) => {
       setPosts((prevState) => [...prevState, { key: data.key, val: data.val() }]);
@@ -22,7 +26,7 @@ function NewsFeed({ currentUser }) {
         unsubscribe();
       }
     };
-  }, []);
+  }, [isFirebaseConfigured]);
 
   const postListItems = [...posts]
     .reverse()
@@ -45,7 +49,11 @@ function NewsFeed({ currentUser }) {
   return (
     <section className="news-feed">
       <h2>News Feed</h2>
-      {currentUser ? (
+      {!isFirebaseConfigured ? (
+        <p className="text-muted">
+          Configure Firebase in <code>.env</code> to load posts.
+        </p>
+      ) : currentUser ? (
         <Composer currentUser={currentUser} />
       ) : (
         <p className="text-muted">
