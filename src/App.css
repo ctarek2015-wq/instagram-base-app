@@ -1,43 +1,87 @@
-#root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
 }
 
-img {
-  height: 15em;
+.app-shell {
+  min-height: 100vh;
+  padding: 1rem;
 }
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
+.top-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.2rem;
+  flex-wrap: wrap;
 }
 
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+.top-nav .brand {
+  font-size: 1.4rem;
+  color: #fff;
+  text-decoration: none;
+  font-weight: 700;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
-  }
+.top-nav nav {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
 }
 
-.card {
-  padding: 2em;
-  background-color: #363333 !important;
+.top-nav .nav-link,
+.post-link,
+.auth-form a,
+.auth-form button {
+  color: #fff;
+}
+
+.app-main {
+  padding-bottom: 2rem;
+}
+
+.top-nav .nav-user {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.nav-user span {
+  color: #cfcfcf;
+}
+
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="file"],
+textarea {
+  width: 100%;
+  padding: 0.55rem;
+  margin-top: 0.4rem;
+  background: #1e1e1e;
+  color: #fff;
+  border: 1px solid #3b3b3b;
+}
+
+button,
+.btn-link {
+  margin-top: 0.6rem;
+}
+
+.text-muted {
+  color: #aaa;
+}
+
+input::file-selector-button {
+  color: #fff;
+  background: #333;
+  border: 1px solid #666;
+  padding: 0.4rem 0.6rem;
+}
+
+.post-page h2,
+.chat-page h2 {
+  margin-top: 0;
 }

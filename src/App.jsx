@@ -1,103 +1,73 @@
 import "./App.css";
-import { onChildAdded, push, ref as databaseRef, set } from "firebase/database";
-import {
-  getDownloadURL,
-  ref as storageRef,
-  uploadBytes,
-} from "firebase/storage";
-import Card from "react-bootstrap/Card";
-import { database, storage } from "./firebase";
-import { useState, useEffect } from "react";
-
-// Save Firebase folder names as constants to avoid bugs due to misspelling
-const IMAGES_FOLDER_NAME = "images";
-const POSTS_FOLDER_NAME = "posts";
-// Note is has moved from "messages"
+import { useEffect, useState } from "react";
+import { Link, Navigate, Route, Routes } from "react-router-dom";
+import { onAuthStateChanged, signOut } from "firebase/auth";
+import { auth } from "./firebase";
+import AuthForm from "./Components/AuthForm";
+import Chat from "./Components/Chat";
+import NewsFeed from "./Components/NewsFeed";
+import PostPage from "./Components/PostPage";
 
 function App() {
-  const [posts, setPosts] = useState([]);
-  const [textInputValue, setTextInputValue] = useState("");
-  const [fileInputFile, setFileInputFile] = useState(null);
-  const [fileInputValue, setFileInputValue] = useState("");
+  const [currentUser, setCurrentUser] = useState(null);
 
   useEffect(() => {
-    const messagesRef = databaseRef(database, POSTS_FOLDER_NAME);
-    // onChildAdded will return data for every child at the reference and every subsequent new child
-    onChildAdded(messagesRef, (data) => {
-      // Add the subsequent child to local component state, initialising a new array to trigger re-render
-      setPosts((prevState) =>
-        // Store message key so we can use it as a key in our list items when rendering messages
-        [...prevState, { key: data.key, val: data.val() }]
-      );
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setCurrentUser(user);
     });
+
+    return () => unsubscribe();
   }, []);
 
-  const writeData = (e) => {
-    // Prevent default form submit behaviour that will reload the page
-    e.preventDefault();
-
-    // Store images in an images folder in Firebase Storage
-    const fileRef = storageRef(
-      storage,
-      `${IMAGES_FOLDER_NAME}/${fileInputFile.name}`
-    );
-
-    // Upload file, save file download URL in database with post text
-    uploadBytes(fileRef, fileInputFile).then(() => {
-      getDownloadURL(fileRef).then((downloadUrl) => {
-        const postListRef = databaseRef(database, POSTS_FOLDER_NAME);
-        const newPostRef = push(postListRef);
-        set(newPostRef, {
-          imageLink: downloadUrl,
-          text: textInputValue,
-        });
-        // Reset input field after submit
-        setTextInputValue("");
-        setFileInputFile("");
-        setFileInputValue(null);
-      });
-    });
+  const handleSignOut = async () => {
+    try {
+      await signOut(auth);
+    } catch (error) {
+      console.error("Sign out failed:", error.message);
+    }
   };
 
-  // Convert messages in state to message JSX elements to render
-  let postListItems = posts.map((post) => (
-    <Card className="m-3" bg="secondary" text="white" key={post.key}>
-      <Card.Img src={post.val.imageLink} className="Card-Img" />
-      <Card.Text>{post.val.text}</Card.Text>
-    </Card>
-  ));
-  // Reverse the order of posts such that newest posts are on top
-  postListItems.reverse();
-
   return (
-    <>
-      <div className="card">
-        <h1 className="text-white">Instagram Bootcamp</h1>
-        <form onSubmit={writeData}>
-          <input
-            type="file"
-            value={fileInputValue}
-            onChange={(e) => {
-              setFileInputFile(e.target.files[0]);
-              setFileInputValue(e.target.value);
-            }}
+    <div className="app-shell">
+      <header className="top-nav">
+        <Link to="/" className="brand">
+          Instagram Base
+        </Link>
+        <nav>
+          <Link to="/" className="nav-link">
+            Home
+          </Link>
+          <Link to="/chat" className="nav-link">
+            Chat
+          </Link>
+          {!currentUser && (
+            <Link to="/authform" className="nav-link">
+              Sign In
+            </Link>
+          )}
+          {currentUser && (
+            <div className="nav-user">
+              <span>{currentUser.email}</span>
+              <button type="button" className="btn btn-sm btn-outline-light" onClick={handleSignOut}>
+                Sign Out
+              </button>
+            </div>
+          )}
+        </nav>
+      </header>
+      <main>
+        <Routes>
+          <Route path="/" element={<NewsFeed currentUser={currentUser} />} />
+          <Route
+            path="/authform"
+            element={<AuthForm />}
           />
-          <br />
-          <input
-            type="text"
-            value={textInputValue}
-            onChange={(e) => setTextInputValue(e.target.value)}
-          />
-          <input
-            type="submit"
-            value="Send"
-            // Disable Send button when text input is empty
-            disabled={!textInputValue}
-          />
-        </form>
-        <ol>{postListItems}</ol>
-      </div>
-    </>
+          <Route path="/post/:postId" element={<PostPage />} />
+          <Route path="/chat" element={<Chat />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </main>
+    </div>
   );
 }
 

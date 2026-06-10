@@ -2,6 +2,7 @@
 import { initializeApp } from "firebase/app";
 import { getDatabase } from "firebase/database";
 import { getStorage } from "firebase/storage";
+import { getAuth } from "firebase/auth";
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_SOME_API_KEY,
@@ -21,3 +22,6 @@ export const database = getDatabase(firebaseApp);
 
 // Get a reference to the storage service, which is used to create references in your storage bucket
 export const storage = getStorage(firebaseApp);
+
+// Get a reference to Firebase Auth
+export const auth = getAuth(firebaseApp);
