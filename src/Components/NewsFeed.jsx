@@ -8,7 +8,7 @@ import "./NewsFeed.css";
 
 const POSTS_FOLDER_NAME = "posts";
 
-function NewsFeed({ currentUser, isFirebaseConfigured }) {
+function NewsFeed({ currentUser, isFirebaseConfigured, onRequestSignIn }) {
   const [posts, setPosts] = useState([]);
 
   useEffect(() => {
@@ -57,7 +57,10 @@ function NewsFeed({ currentUser, isFirebaseConfigured }) {
         <Composer currentUser={currentUser} />
       ) : (
         <p className="text-muted">
-          <Link to="/authform">Sign in</Link> to post.
+          <button className="btn btn-outline-info btn-sm" onClick={onRequestSignIn}>
+            Create Account or Sign In
+          </button>
+          {' '}to post.
         </p>
       )}
 

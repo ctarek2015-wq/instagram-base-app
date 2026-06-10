@@ -6,7 +6,7 @@ import {
 } from "firebase/auth";
 import { auth, isFirebaseConfigured } from "../firebase";
 
-function AuthForm({ currentUser }) {
+function AuthForm({ currentUser, onAuthComplete }) {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -31,6 +31,10 @@ function AuthForm({ currentUser }) {
       } else {
         await signInWithEmailAndPassword(auth, email, password);
       }
+
+      if (typeof onAuthComplete === "function") {
+        onAuthComplete();
+      }
       navigate("/");
     } catch (error) {
       setErrorMessage(error.message);
@@ -43,7 +47,7 @@ function AuthForm({ currentUser }) {
     return (
       <section className="auth-form">
         <h2>Firebase not configured</h2>
-        <p>Please add your Firebase values to .env before signing in.</p>
+        <p>Please add your Firebase values to <code>.env</code> before signing in.</p>
       </section>
     );
   }

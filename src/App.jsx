@@ -1,6 +1,6 @@
 import "./App.css";
 import { useEffect, useState } from "react";
-import { Link, Navigate, Route, Routes } from "react-router-dom";
+import { Link, Navigate, Route, Routes, useNavigate } from "react-router-dom";
 import { onAuthStateChanged, signOut } from "firebase/auth";
 import { auth, isFirebaseConfigured, firebaseConfigError } from "./firebase";
 import AuthForm from "./Components/AuthForm";
@@ -9,20 +9,35 @@ import NewsFeed from "./Components/NewsFeed";
 import PostPage from "./Components/PostPage";
 
 function App() {
-  const [currentUser, setCurrentUser] = useState(null);
+  const [loggedInUser, setLoggedInUser] = useState(null);
+  const [shouldRenderAuthForm, setShouldRenderAuthForm] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (!isFirebaseConfigured || !auth) {
-      setCurrentUser(null);
+      setLoggedInUser(null);
       return;
     }
 
     const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setCurrentUser(user);
+      setLoggedInUser(user);
+      if (user) {
+        setShouldRenderAuthForm(false);
+      }
     });
 
     return () => unsubscribe();
   }, []);
+
+  const toggleAuthForm = () => {
+    setShouldRenderAuthForm((prevState) => {
+      const nextState = !prevState;
+      if (nextState) {
+        navigate("/");
+      }
+      return nextState;
+    });
+  };
 
   const handleSignOut = async () => {
     if (!auth) {
@@ -35,6 +50,19 @@ function App() {
       console.error("Sign out failed:", error.message);
     }
   };
+
+  const renderHomeRoute = shouldRenderAuthForm && !loggedInUser ? (
+    <AuthForm
+      currentUser={loggedInUser}
+      onAuthComplete={toggleAuthForm}
+    />
+  ) : (
+    <NewsFeed
+      currentUser={loggedInUser}
+      isFirebaseConfigured={isFirebaseConfigured}
+      onRequestSignIn={toggleAuthForm}
+    />
+  );
 
   return (
     <div className="app-shell">
@@ -49,14 +77,18 @@ function App() {
           <Link to="/chat" className="nav-link">
             Chat
           </Link>
-          {isFirebaseConfigured && !currentUser && (
-            <Link to="/authform" className="nav-link">
-              Sign In
-            </Link>
+          {isFirebaseConfigured && !loggedInUser && (
+            <button
+              type="button"
+              className="btn btn-sm btn-primary"
+              onClick={toggleAuthForm}
+            >
+              Create Account or Sign In
+            </button>
           )}
-          {isFirebaseConfigured && currentUser && (
+          {isFirebaseConfigured && loggedInUser && (
             <div className="nav-user">
-              <span>{currentUser.email}</span>
+              <span>{loggedInUser.email}</span>
               <button
                 type="button"
                 className="btn btn-sm btn-outline-light"
@@ -72,37 +104,26 @@ function App() {
       {!isFirebaseConfigured && (
         <section className="alert alert-warning m-3" role="alert">
           Firebase is not configured yet. Update <code>.env</code> with your project values,
-          or this app will not be able to load feed/auth posts.
+          or this app will not be able to load feed/auth/posts.
           <div className="mt-2 text-danger">{firebaseConfigError}</div>
         </section>
       )}
 
       <main>
         <Routes>
-          <Route
-            path="/"
-            element={
-              <NewsFeed
-                currentUser={currentUser}
-                isFirebaseConfigured={isFirebaseConfigured}
-              />
-            }
-          />
+          <Route path="/" element={renderHomeRoute} />
           <Route
             path="/authform"
             element={
               <AuthForm
-                isFirebaseConfigured={isFirebaseConfigured}
-                currentUser={currentUser}
+                currentUser={loggedInUser}
+                onAuthComplete={() => navigate("/")}
               />
             }
           />
-          <Route
-            path="/post/:postId"
-            element={<PostPage isFirebaseConfigured={isFirebaseConfigured} />}
-          />
-          <Route path="/chat" element={<Chat />} />
+          <Route path="/post/:postId" element={<PostPage isFirebaseConfigured={isFirebaseConfigured} />} />
           <Route path="/posts/:postId" element={<PostPage isFirebaseConfigured={isFirebaseConfigured} />} />
+          <Route path="/chat" element={<Chat />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
