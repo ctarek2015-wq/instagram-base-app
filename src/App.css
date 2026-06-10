@@ -85,3 +85,43 @@ input::file-selector-button {
 .chat-page h2 {
   margin-top: 0;
 }
+
+.chat-log {
+  min-height: 260px;
+  padding: 1rem;
+  border: 1px solid #333;
+  border-radius: 12px;
+  background: #141414;
+  margin-bottom: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  max-height: 360px;
+  overflow-y: auto;
+}
+
+.chat-message {
+  margin: 0;
+  padding: 0.75rem;
+  border: 1px solid #2a2a2a;
+  border-radius: 10px;
+  background: #1e1e1e;
+}
+
+.chat-message p {
+  margin: 0 0 0.5rem;
+}
+
+.chat-message time {
+  font-size: 0.8rem;
+  color: #b0b0b0;
+}
+
+.chat-form {
+  display: flex;
+  gap: 0.6rem;
+}
+
+.chat-form input[type="text"] {
+  flex: 1;
+}
