@@ -1,46 +1,115 @@
 import "./App.css";
 import { onChildAdded, push, ref, set } from "firebase/database";
 import { database } from "./firebase";
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 
-// Save the Firebase message folder name as a constant to avoid bugs due to misspelling
 const DB_MESSAGES_KEY = "messages";
 
 function App() {
   const [messages, setMessages] = useState([]);
+  const [composerText, setComposerText] = useState("");
 
   useEffect(() => {
     const messagesRef = ref(database, DB_MESSAGES_KEY);
-    // onChildAdded will return data for every child at the reference and every subsequent new child
-    onChildAdded(messagesRef, (data) => {
-      // Add the subsequent child to local component state, initialising a new array to trigger re-render
-      setMessages((prevState) =>
-        // Store message key so we can use it as a key in our list items when rendering messages
-        [...prevState, { key: data.key, val: data.val() }]
-      );
+    const unsubscribe = onChildAdded(messagesRef, (data) => {
+      setMessages((prevState) => [...prevState, { key: data.key, val: data.val() }]);
     });
+
+    return unsubscribe;
   }, []);
 
-  const writeData = () => {
+  const writeData = (event) => {
+    event.preventDefault();
+    const messageText = composerText.trim() ? composerText.trim() : "abc";
     const messageListRef = ref(database, DB_MESSAGES_KEY);
     const newMessageRef = push(messageListRef);
-    set(newMessageRef, "abc");
+    set(newMessageRef, messageText);
+    setComposerText("");
   };
 
-  // Convert messages in state to message JSX elements to render
-  let messageListItems = messages.map((message) => (
-    <li key={message.key}>{message.val}</li>
-  ));
+  const messageListItems = messages
+    .slice()
+    .reverse()
+    .map((message) => (
+      <li key={message.key} className="message-item">
+        <span className="message-badge">{(message.key || "msg").slice(-4)}</span>
+        <p className="message-text">{message.val}</p>
+      </li>
+    ));
 
   return (
-    <>
-      <h1>Instagram Bootcamp</h1>
-      <div className="card">
-        {/* TODO: Add input field and add text input as messages in Firebase */}
-        <button onClick={writeData}>Send</button>
-        <ol>{messageListItems}</ol>
-      </div>
-    </>
+    <div className="app-shell">
+      <header className="topbar glass-surface">
+        <p className="eyebrow">Realtime Workspace</p>
+        <h1>Instagram Base</h1>
+        <p className="status-pill">Linear-inspired dark UI • Firebase-backed chat</p>
+      </header>
+
+      <section className="content-grid">
+        <article className="surface glass-surface">
+          <h2>Feed</h2>
+          <p className="surface-subtitle">Latest live messages from Firebase.</p>
+          <ol className="message-list">
+            {messageListItems.length ? messageListItems : <li className="empty-state">No messages yet.</li>}
+          </ol>
+        </article>
+
+        <article className="surface glass-surface">
+          <h2>Auth</h2>
+          <p className="surface-subtitle">Connection status and runtime context.</p>
+          <div className="info-card">
+            <div>
+              <p className="info-label">Environment</p>
+              <p className="info-value">Firebase Realtime Database</p>
+            </div>
+            <div>
+              <p className="info-label">Node</p>
+              <p className="info-value">{DB_MESSAGES_KEY}</p>
+            </div>
+            <div>
+              <p className="info-label">Messages synced</p>
+              <p className="info-value">{messages.length}</p>
+            </div>
+          </div>
+        </article>
+
+        <article className="surface glass-surface">
+          <h2>Chat</h2>
+          <p className="surface-subtitle">Send a message to the shared message stream.</p>
+          <form className="chat-form" onSubmit={writeData}>
+            <label htmlFor="composer" className="sr-only">
+              Message
+            </label>
+            <textarea
+              id="composer"
+              value={composerText}
+              onChange={(event) => setComposerText(event.target.value)}
+              placeholder="Type your message..."
+              rows={4}
+            />
+            <button type="submit">Send</button>
+          </form>
+        </article>
+
+        <article className="surface glass-surface">
+          <h2>Post</h2>
+          <p className="surface-subtitle">Post metadata and quick actions.</p>
+          <div className="post-metrics">
+            <div>
+              <p className="info-label">Recent</p>
+              <p className="info-value">{Math.max(messages.length - 1, 0)} updates</p>
+            </div>
+            <div>
+              <p className="info-label">Last payload</p>
+              <p className="info-value">{messages[messages.length - 1]?.val || "—"}</p>
+            </div>
+          </div>
+          <button type="button" onClick={() => setComposerText("Generated by post surface")}>
+            Prefill sample payload
+          </button>
+        </article>
+      </section>
+    </div>
   );
 }
 
